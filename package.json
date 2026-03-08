@@ -1,0 +1,15 @@
+{
+  "name": "candle-rolling-engine-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "Candle-Based Rolling Computation Engine monorepo",
+  "packageManager": "pnpm@10.4.0",
+  "scripts": {
+    "dev": "pnpm --filter @candle/engine build && pnpm --parallel --filter backend --filter frontend dev",
+    "dev:all": "pnpm -r --parallel dev",
+    "build": "pnpm -r build",
+    "test": "pnpm -r test",
+    "lint": "pnpm -r lint",
+    "format": "pnpm -r format"
+  }
+}
