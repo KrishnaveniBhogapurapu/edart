@@ -155,15 +155,21 @@ Backend default URL: `http://localhost:4000`
 ## Deployment
 
 ### Frontend (Vercel)
-- Root directory: `frontend`
-- Build command: `pnpm build`
-- Output directory: `dist`
-- Env: `VITE_API_BASE_URL`
+- `vercel.json` is included at repo root for monorepo-aware build.
+- In Vercel project settings:
+  - Root Directory: repository root (`.`)
+  - Framework Preset: Auto / Vite
+  - Environment Variable: `VITE_API_BASE_URL=https://<your-render-backend-domain>`
+- Build behavior from `vercel.json`:
+  - Install: `corepack enable && pnpm install --frozen-lockfile`
+  - Build: `pnpm --filter @candle/engine build && pnpm --filter frontend build`
+  - Output: `frontend/dist`
+  - SPA fallback rewrite enabled for React Router.
 
 ### Backend (Render)
-- Root directory: `backend`
-- Build command: `pnpm build`
-- Start command: `pnpm start`
+- Root directory: repository root (`.`)
+- Build command: `corepack enable && pnpm install --frozen-lockfile && pnpm --filter @candle/engine build && pnpm --filter backend build`
+- Start command: `pnpm --filter backend start`
 - Env: `PORT`, `MONGODB_URI`, `JWT_ACCESS_SECRET`, `JWT_REFRESH_SECRET`, `TOKEN_ENCRYPTION_SECRET`, `FRONTEND_URL`
 
 ### Database (MongoDB Atlas)
