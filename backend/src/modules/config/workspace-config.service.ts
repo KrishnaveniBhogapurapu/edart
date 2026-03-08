@@ -7,6 +7,8 @@ import {
 } from '../../database/schemas/workspace-config.schema.js';
 import { UpdateWorkspaceConfigDto } from './dto/update-workspace-config.dto.js';
 
+const IST_TIMEZONE = 'Asia/Kolkata';
+
 @Injectable()
 export class WorkspaceConfigService {
   constructor(
@@ -15,8 +17,17 @@ export class WorkspaceConfigService {
   ) {}
 
   private normalizeWorkspaceDoc(doc: Record<string, unknown>): Record<string, unknown> {
+    const session = (doc.session ?? {}) as Record<string, unknown>;
+
     return {
       ...doc,
+      session: {
+        marketStartTime:
+          typeof session.marketStartTime === 'string' ? session.marketStartTime : '09:15',
+        timezone: IST_TIMEZONE,
+        anchorRealTime:
+          typeof session.anchorRealTime === 'string' ? session.anchorRealTime : null,
+      },
       activeVariableCollectionId: doc.activeVariableCollectionId
         ? String(doc.activeVariableCollectionId)
         : null,
@@ -38,7 +49,7 @@ export class WorkspaceConfigService {
       interval: '3m',
       session: {
         marketStartTime: '09:15',
-        timezone: 'Asia/Kolkata',
+        timezone: IST_TIMEZONE,
         anchorRealTime: null,
       },
       variables: [],
@@ -51,6 +62,13 @@ export class WorkspaceConfigService {
     userId: string,
     payload: UpdateWorkspaceConfigDto,
   ): Promise<Record<string, unknown>> {
+    const normalizedSession = payload.session
+      ? {
+          ...payload.session,
+          timezone: IST_TIMEZONE,
+        }
+      : undefined;
+
     const updated = await this.workspaceConfigModel
       .findOneAndUpdate(
         { userId: new Types.ObjectId(userId) },
@@ -58,7 +76,7 @@ export class WorkspaceConfigService {
           $set: {
             ...(payload.mode ? { mode: payload.mode } : {}),
             ...(payload.interval ? { interval: payload.interval } : {}),
-            ...(payload.session ? { session: payload.session } : {}),
+            ...(normalizedSession ? { session: normalizedSession } : {}),
             ...(payload.api ? { api: payload.api } : {}),
           },
           $setOnInsert: {

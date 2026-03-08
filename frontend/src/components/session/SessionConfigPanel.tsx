@@ -11,7 +11,36 @@ interface SessionConfigPanelProps {
   onSave: (next: Partial<AppWorkspaceConfig>) => void;
 }
 
-function toLocalDateTimeInput(isoOrLocal?: string | null): string {
+const IST_TIMEZONE = 'Asia/Kolkata';
+const IST_OFFSET_MS = (5 * 60 + 30) * 60 * 1000;
+
+function toIstIso(dateTimeLocal: string): string | undefined {
+  const match = dateTimeLocal.match(
+    /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})$/,
+  );
+  if (!match) {
+    return undefined;
+  }
+
+  const [, year, month, day, hour, minute] = match;
+  const utcMs =
+    Date.UTC(Number(year), Number(month) - 1, Number(day), Number(hour), Number(minute)) -
+    IST_OFFSET_MS;
+  return new Date(utcMs).toISOString();
+}
+
+function formatDateAsIstInput(date: Date): string {
+  const istDate = new Date(date.getTime() + IST_OFFSET_MS);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const yyyy = istDate.getUTCFullYear();
+  const mm = pad(istDate.getUTCMonth() + 1);
+  const dd = pad(istDate.getUTCDate());
+  const hh = pad(istDate.getUTCHours());
+  const min = pad(istDate.getUTCMinutes());
+  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+}
+
+function toIstDateTimeInput(isoOrLocal?: string | null): string {
   if (!isoOrLocal) {
     return '';
   }
@@ -25,30 +54,24 @@ function toLocalDateTimeInput(isoOrLocal?: string | null): string {
     return '';
   }
 
-  const pad = (value: number) => String(value).padStart(2, '0');
-  const yyyy = date.getFullYear();
-  const mm = pad(date.getMonth() + 1);
-  const dd = pad(date.getDate());
-  const hh = pad(date.getHours());
-  const min = pad(date.getMinutes());
-
-  return `${yyyy}-${mm}-${dd}T${hh}:${min}`;
+  return formatDateAsIstInput(date);
 }
 
 export function SessionConfigPanel({ config, onSave }: SessionConfigPanelProps) {
   const [anchorLocal, setAnchorLocal] = useState<string>(
-    toLocalDateTimeInput(config.session.anchorRealTime ?? null),
+    toIstDateTimeInput(config.session.anchorRealTime ?? null),
   );
 
   useEffect(() => {
-    setAnchorLocal(toLocalDateTimeInput(config.session.anchorRealTime ?? null));
+    setAnchorLocal(toIstDateTimeInput(config.session.anchorRealTime ?? null));
   }, [config.session.anchorRealTime]);
 
   const saveAnchor = () => {
     onSave({
       session: {
         ...config.session,
-        anchorRealTime: anchorLocal ? new Date(anchorLocal).toISOString() : undefined,
+        timezone: IST_TIMEZONE,
+        anchorRealTime: anchorLocal ? toIstIso(anchorLocal) : undefined,
       },
     });
   };
@@ -91,16 +114,23 @@ export function SessionConfigPanel({ config, onSave }: SessionConfigPanelProps) 
           </Select>
         </div>
 
+        <div>
+          <label className="mb-1 block text-xs font-semibold text-muted">Timezone</label>
+          <Select value={IST_TIMEZONE} disabled>
+            <option value={IST_TIMEZONE}>IST (Asia/Kolkata)</option>
+          </Select>
+        </div>
+
         {config.mode === 'MOCK' ? (
           <>
             <div>
               <label className="mb-1 block text-xs font-semibold text-muted">
-                Treat this real time as 09:15
+                Treat this IST time as 09:15
               </label>
               <Input type="datetime-local" value={anchorLocal} onChange={(event) => setAnchorLocal(event.target.value)} />
             </div>
             <p className="text-xs text-muted">
-              System Time = 09:15 + (Current Real Time - Configured Real Time)
+              System Time (IST) = 09:15 + (Current Real Time in IST - Configured Real Time in IST)
             </p>
             <Button variant="outline" size="sm" onClick={saveAnchor}>
               Save Anchor Time

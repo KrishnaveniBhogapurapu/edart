@@ -229,8 +229,8 @@ export function DashboardPage() {
             </div>
 
             <div className="flex flex-wrap gap-2">
-              <Badge>Real Time: {status.realTime ?? '--:--:--'}</Badge>
-              <Badge>System Time: {status.systemTime ?? '--:--:--'}</Badge>
+              <Badge>Real Time (IST): {status.realTime ?? '--:--:--'}</Badge>
+              <Badge>System Time (IST): {status.systemTime ?? '--:--:--'}</Badge>
               <Badge>Stream: {streamState}</Badge>
               <Badge>Zerodha: {(config.api?.user_id as string) ? 'configured' : 'not configured'}</Badge>
               <Badge>

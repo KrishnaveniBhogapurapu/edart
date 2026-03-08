@@ -6,21 +6,30 @@ import {
   formatClock,
 } from '../../common/utils/time.util.js';
 
+const IST_TIMEZONE = 'Asia/Kolkata';
+
 @Injectable()
 export class MarketClockService {
   getSessionTimes(session: SessionConfig, interval: '3m' | '5m' | '15m') {
     const realNow = new Date();
-    const realTime = formatClock(realNow, session.timezone || 'Asia/Kolkata');
+    const timezone = IST_TIMEZONE;
+    const realTime = formatClock(realNow, timezone);
 
     const systemNow = session.anchorRealTime
-      ? deriveSystemTime(realNow, session.anchorRealTime, session.marketStartTime || '09:15')
+      ? deriveSystemTime(
+          realNow,
+          session.anchorRealTime,
+          session.marketStartTime || '09:15',
+          timezone,
+        )
       : realNow;
 
-    const systemTime = formatClock(systemNow, session.timezone || 'Asia/Kolkata');
+    const systemTime = formatClock(systemNow, timezone);
     const completedCount = deriveCompletedCandleCount(
       systemNow,
       session.marketStartTime || '09:15',
       interval,
+      timezone,
     );
 
     return {
